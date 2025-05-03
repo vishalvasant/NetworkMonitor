@@ -8,7 +8,7 @@
 
 class NetworkMonitor {
 public:
-    NetworkMonitor();
+    NetworkMonitor(const std::string& interface);
     ~NetworkMonitor();
 
     void start();
@@ -19,16 +19,16 @@ public:
     bool validateBPFFilter(const std::string& filter, QString& errorMessage) const;
 
 private:
-    // Existing private methods and members
     std::string interface_;
     std::string filter_;
     pcap_t* pcap_handle_;
-    std::atomic<bool> running_;
-
+    
     std::thread capture_thread_;
     std::thread process_thread_;
     std::thread analyze_thread_;
     std::thread store_thread_;
+    
+    std::atomic<bool> running_{false};
 
     void captureThread();
     void processThread();
