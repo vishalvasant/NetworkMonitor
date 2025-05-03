@@ -1,33 +1,9 @@
-// Add this method to the existing NetworkMonitor.cpp file
+#include "core/NetworkMonitor.hpp"
+#include "utils/Logger.hpp"
+#include <stdexcept>
 
-bool NetworkMonitor::validateBPFFilter(const std::string& filter, QString& errorMessage) const
-{
-    // Create a temporary pcap handler for validation
-    char errbuf[PCAP_ERRBUF_SIZE] = {0};
-    pcap_t* pcap = pcap_open_dead(DLT_EN10MB, 65535);
-    
-    if (!pcap) {
-        errorMessage = QString("Failed to initialize filter validator");
-        return false;
-    }
-    
-    bpf_program program;
-    int result = pcap_compile(pcap, &program, filter.c_str(), 1, PCAP_NETMASK_UNKNOWN);
-    
-    if (result != 0) {
-        errorMessage = QString(pcap_geterr(pcap));
-        pcap_close(pcap);
-        return false;
-    }
-    
-    // Free resources
-    pcap_freecode(&program);
-    pcap_close(pcap);
-    
-    return true;
-}
+// Assuming existing implementation of other methods...
 
-// Modify the existing setFilter method to include additional error handling
 void NetworkMonitor::setFilter(const std::string& filter)
 {
     if (!running_) {
@@ -52,4 +28,36 @@ void NetworkMonitor::setFilter(const std::string& filter)
     
     filter_ = filter;
     Logger::info("Applied filter: " + filter);
+}
+
+bool NetworkMonitor::validateBPFFilter(const std::string& filter, QString& errorMessage) const
+{
+    // Early exit for empty filters
+    if (filter.empty()) {
+        return true;
+    }
+
+    // Create a temporary pcap handler for validation
+    char errbuf[PCAP_ERRBUF_SIZE] = {0};
+    pcap_t* pcap = pcap_open_dead(DLT_EN10MB, 65535);
+    
+    if (!pcap) {
+        errorMessage = QString("Failed to initialize filter validator");
+        return false;
+    }
+    
+    bpf_program program;
+    int result = pcap_compile(pcap, &program, filter.c_str(), 1, PCAP_NETMASK_UNKNOWN);
+    
+    if (result != 0) {
+        errorMessage = QString(pcap_geterr(pcap));
+        pcap_close(pcap);
+        return false;
+    }
+    
+    // Free resources
+    pcap_freecode(&program);
+    pcap_close(pcap);
+    
+    return true;
 }
